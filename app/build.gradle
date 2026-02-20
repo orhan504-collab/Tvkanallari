@@ -1,0 +1,21 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.turkbox.tv'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.turkbox.tv"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+}
+
+dependencies {
+    implementation 'androidx.leanback:leanback:1.0.0'
+    implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
+}
