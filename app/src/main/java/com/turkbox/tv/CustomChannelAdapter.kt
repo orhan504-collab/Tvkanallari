@@ -1,5 +1,6 @@
 package com.turkbox.tv
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,38 +11,38 @@ class CustomChannelAdapter(
     private val channels: List<Channel>,
     private val onFocus: (Channel) -> Unit,
     private val onClick: (Channel) -> Unit
-) : RecyclerView.Adapter<CustomChannelAdapter.ChannelViewHolder>() {
+) : RecyclerView.Adapter<CustomChannelAdapter.ViewHolder>() {
 
-    class ChannelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tvName: TextView = view.findViewById(android.R.id.text1)
+    class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+        val text: TextView = v.findViewById(android.R.id.text1)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
-        // Standart Android liste görünümünü kullanıyoruz (basitlik için)
-        val view = LayoutInflater.from(parent.context)
-            .inflate(android.R.layout.simple_list_item_1, parent, false)
-        return ChannelViewHolder(view)
+    override fun onCreateViewHolder(p: ViewGroup, t: Int): ViewHolder {
+        val v = LayoutInflater.from(p.context).inflate(android.R.layout.simple_list_item_1, p, false)
+        v.isFocusable = true
+        v.isFocusableInTouchMode = true
+        return ViewHolder(v)
     }
 
-    override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
-        val channel = channels[position]
-        holder.tvName.text = channel.name
-        holder.tvName.setTextColor(android.graphics.Color.WHITE)
+    override fun onBindViewHolder(h: ViewHolder, p: Int) {
+        val c = channels[p]
+        h.text.text = c.name
+        h.text.setTextColor(Color.WHITE)
 
-        // Kumanda ile üzerine gelindiğinde (Focus)
-        holder.itemView.setOnFocusChangeListener { _, hasFocus ->
+        h.itemView.setOnFocusChangeListener { view, hasFocus ->
             if (hasFocus) {
-                onFocus(channel)
-                holder.itemView.setBackgroundColor(android.graphics.Color.RED) // Seçili kanal rengi
+                // Kumanda ile gelince %10 büyüt ve kırmızı yap
+                view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
+                view.setBackgroundColor(Color.parseColor("#E50914"))
+                onFocus(c)
             } else {
-                holder.itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                // Odak gidince küçült
+                view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
+                view.setBackgroundColor(Color.TRANSPARENT)
             }
         }
 
-        // Tıklandığında
-        holder.itemView.setOnClickListener {
-            onClick(channel)
-        }
+        h.itemView.setOnClickListener { onClick(c) }
     }
 
     override fun getItemCount() = channels.size
