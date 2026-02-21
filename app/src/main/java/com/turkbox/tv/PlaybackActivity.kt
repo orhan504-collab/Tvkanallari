@@ -13,18 +13,23 @@ class PlaybackActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_playback)
 
-        val videoUrl = intent.getStringExtra("videoUrl")
         val playerView = findViewById<StyledPlayerView>(R.id.player_view)
+        val videoUrl = intent.getStringExtra("CHANNEL_URL") ?: ""
 
-        player = ExoPlayer.Builder(this).build()
-        playerView.player = player
-
-        videoUrl?.let {
-            val mediaItem = MediaItem.fromUri(it)
-            player?.setMediaItem(mediaItem)
-            player?.prepare()
-            player?.play()
+        if (videoUrl.isNotEmpty()) {
+            player = ExoPlayer.Builder(this).build().apply {
+                playerView.player = this
+                val mediaItem = MediaItem.fromUri(videoUrl)
+                setMediaItem(mediaItem)
+                prepare()
+                play()
+            }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        player?.pause()
     }
 
     override fun onDestroy() {
