@@ -8,8 +8,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 
 class CustomChannelAdapter(
     private val channels: List<Channel>,
@@ -32,26 +30,22 @@ class CustomChannelAdapter(
         val c = channels[p]
         h.name.text = c.name
 
-        // LOGO YÜKLEME SİHİRBAZI
-        if (!c.logo.isNullOrEmpty()) {
-            Glide.with(h.itemView.context)
-                .load(c.logo)
-                .diskCacheStrategy(DiskCacheStrategy.ALL) // Logoları hafızaya al ki hızlı açılsın
-                .placeholder(android.R.drawable.ic_menu_gallery) // Yüklenirken resim ikonu
-                .error(android.R.drawable.ic_delete) // Bulamazsa çarpı ikonu
-                .into(h.logo)
-        }
+        // Yüklediğin resmi buradan bağladık
+        // ÖNEMLİ: Resim ismin farklıysa (örneğin logo.png ise) burayı R.drawable.logo yap
+        h.logo.setImageResource(R.drawable.kanal_logo)
 
         h.itemView.setOnFocusChangeListener { view, hasFocus ->
             if (hasFocus) {
-                view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
-                h.card.setCardBackgroundColor(Color.parseColor("#E50914")) // Seçili: Kırmızı
-                h.card.cardElevation = 20f
+                // Seçilen kanal büyüyecek ve kırmızı olacak
+                view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(150).start()
+                h.card.setCardBackgroundColor(Color.parseColor("#E50914"))
+                h.card.cardElevation = 15f
                 onFocus(c)
             } else {
-                view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
-                h.card.setCardBackgroundColor(Color.parseColor("#222222")) // Normal: Gri
-                h.card.cardElevation = 6f
+                // Odak gidince eski gri haline dönecek
+                view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()
+                h.card.setCardBackgroundColor(Color.parseColor("#222222"))
+                h.card.cardElevation = 4f
             }
         }
 
