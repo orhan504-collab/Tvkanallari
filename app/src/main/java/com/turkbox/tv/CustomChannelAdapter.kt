@@ -20,7 +20,6 @@ class CustomChannelAdapter(
     override fun onCreateViewHolder(p: ViewGroup, t: Int): ViewHolder {
         val v = LayoutInflater.from(p.context).inflate(android.R.layout.simple_list_item_1, p, false)
         v.isFocusable = true
-        v.isFocusableInTouchMode = true
         return ViewHolder(v)
     }
 
@@ -31,17 +30,14 @@ class CustomChannelAdapter(
 
         h.itemView.setOnFocusChangeListener { view, hasFocus ->
             if (hasFocus) {
-                // Kumanda ile gelince %10 büyüt ve kırmızı yap
                 view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
                 view.setBackgroundColor(Color.parseColor("#E50914"))
                 onFocus(c)
             } else {
-                // Odak gidince küçült
                 view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
                 view.setBackgroundColor(Color.TRANSPARENT)
             }
         }
-
         h.itemView.setOnClickListener { onClick(c) }
     }
 
