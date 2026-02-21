@@ -1,26 +1,54 @@
+package com.turkbox.tv
+
+import android.os.Bundle
+import androidx.fragment.app.FragmentActivity
+import androidx.leanback.app.BrowseSupportFragment
+import androidx.leanback.widget.*
+import org.json.JSONArray
+import org.json.JSONObject
+
+class MainActivity : FragmentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val fragment = BrowseSupportFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.main_frame, fragment)
+            .commit()
+
+        fragment.title = "TurkBox TV"
+        setupAdapter(fragment)
+    }
+
     private fun setupAdapter(fragment: BrowseSupportFragment) {
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-        val listRowAdapter = ArrayObjectAdapter(CardPresenter())
+        val cardPresenter = CardPresenter()
+        val listRowAdapter = ArrayObjectAdapter(cardPresenter)
 
         try {
+            // Assets klasöründeki dosyayı oku
             val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
-            // SENİN JSON YAPIN DİREKT ARRAY OLARAK BAŞLIYOR:
-            val jsonArray = org.json.JSONArray(jsonString) 
+            
+            // Senin JSON yapın direkt liste ([]) olarak başlıyorsa:
+            val jsonArray = JSONArray(jsonString)
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
                 listRowAdapter.add(Channel(
-                    i, // ID eksik olduğu için index numarasını ID olarak atıyoruz
+                    i, // ID olarak sıra numarasını veriyoruz
                     obj.getString("name"),
                     obj.getString("url"),
                     obj.getString("logo")
                 ))
             }
         } catch (e: Exception) {
+            // Hata durumunda ekrana hata bilgisini basan bir kart ekle
             listRowAdapter.add(Channel(0, "Hata: ${e.message}", "", ""))
         }
 
-        rowsAdapter.add(ListRow(HeaderItem(0, "Canlı Kanallar"), listRowAdapter))
+        val header = HeaderItem(0, "Canlı Kanallar")
+        rowsAdapter.add(ListRow(header, listRowAdapter))
         fragment.adapter = rowsAdapter
     }
-    
+}
