@@ -1,6 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main_frame"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212" />
+    android:orientation="horizontal"
+    android:background="#0F0F0F">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewChannels"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:background="#1A1A1A" />
+
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:padding="20dp">
+
+        <FrameLayout
+            android:id="@+id/player_frame"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="#000000"
+            android:padding="2dp">
+
+            <VideoView
+                android:id="@+id/mainVideoView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
+            
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/txtChannelName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/player_frame"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:text="Kanal Seçiniz"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+
+    </RelativeLayout>
+</LinearLayout>
