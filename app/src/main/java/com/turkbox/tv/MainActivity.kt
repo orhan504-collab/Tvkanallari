@@ -1,11 +1,11 @@
 package com.turkbox.tv
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.*
 import org.json.JSONObject
-import java.io.IOException
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,10 +27,7 @@ class MainActivity : FragmentActivity() {
         val listRowAdapter = ArrayObjectAdapter(cardPresenter)
 
         try {
-            // Assets klasöründen dosyayı oku
             val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
-            
-            // JSON paketini aç ve "channels" listesini al
             val jsonObject = JSONObject(jsonString)
             val jsonArray = jsonObject.getJSONArray("channels")
 
@@ -44,8 +41,18 @@ class MainActivity : FragmentActivity() {
                 ))
             }
         } catch (e: Exception) {
-            // Hata mesajını ekrana basan bir kart oluştur
-            listRowAdapter.add(Channel(0, "Veri Hatası: ${e.localizedMessage}", "", ""))
+            listRowAdapter.add(Channel(0, "Hata: ${e.localizedMessage}", "", ""))
+        }
+
+        // TIKLAMA OLAYI BURADA:
+        fragment.onItemViewClickedListener = OnItemViewClickedListener { _, item, _, _ ->
+            if (item is Channel && item.url.isNotEmpty()) {
+                val intent = Intent(this, PlaybackActivity::class.java).apply {
+                    putExtra("CHANNEL_NAME", item.name)
+                    putExtra("CHANNEL_URL", item.url)
+                }
+                startActivity(intent)
+            }
         }
 
         val header = HeaderItem(0, "Canlı Yayınlar")
