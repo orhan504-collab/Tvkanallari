@@ -17,8 +17,6 @@ class MainActivity : FragmentActivity() {
             .commit()
 
         fragment.title = "TurkBox TV"
-        
-        // Kanalları yükle
         setupAdapter(fragment)
     }
 
@@ -28,9 +26,11 @@ class MainActivity : FragmentActivity() {
         val listRowAdapter = ArrayObjectAdapter(cardPresenter)
 
         try {
-            // Assets içindeki JSON'ı oku
-            val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
-            val jsonArray = JSONObject(jsonString).getJSONArray("channels")
+            // Assets klasöründeki dosyayı güvenli açma
+            val inputStream = assets.open("channels.json")
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
+            val jsonObject = JSONObject(jsonString)
+            val jsonArray = jsonObject.getJSONArray("channels")
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
@@ -42,12 +42,11 @@ class MainActivity : FragmentActivity() {
                 ))
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            // Hata olursa en azından listeye bir uyarı ekle
-            listRowAdapter.add(Channel(0, "Liste Yüklenemedi", "", ""))
+            // Hata olursa boş kalmasın, hata mesajını kart olarak gösterelim
+            listRowAdapter.add(Channel(0, "Hata: ${e.message}", "", ""))
         }
 
-        val header = HeaderItem(0, "Canlı Kanallar")
+        val header = HeaderItem(0, "Canlı Yayınlar")
         rowsAdapter.add(ListRow(header, listRowAdapter))
         fragment.adapter = rowsAdapter
     }
