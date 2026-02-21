@@ -16,49 +16,30 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var adapter: CustomChannelAdapter
     private var channelList = mutableListOf<Channel>()
-    private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Başlangıç kanalı - Sadece isim ve URL
+        // Listeyi başlat
         channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
 
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = GridLayoutManager(this, 4)
+        // XML'deki ID ile bağlama (Hata buradaydı)
+        val rvChannels = findViewById<RecyclerView>(R.id.recyclerView)
+        rvChannels.layoutManager = GridLayoutManager(this, 4)
         
-        adapter = CustomChannelAdapter(channelList, 
-            onFocus = { channel -> /* Odaklanma işlemi */ },
-            onClick = { channel -> 
-                Toast.makeText(this, "Açılıyor: ${channel.name}", Toast.LENGTH_SHORT).show()
-            }
-        )
-        recyclerView.adapter = adapter
+        adapter = CustomChannelAdapter(channelList, {}, { channel ->
+            Toast.makeText(this, "Açılıyor: ${channel.name}", Toast.LENGTH_SHORT).show()
+        })
+        rvChannels.adapter = adapter
 
-        // KANAL EKLEME BUTONU
+        // Ekleme butonu (Hata buradaydı)
         val btnAdd = findViewById<FloatingActionButton>(R.id.btnAddChannel)
         btnAdd.setOnClickListener {
-            val view = LayoutInflater.from(this).inflate(R.layout.dialog_add_channel, null)
-            val etName = view.findViewById<EditText>(R.id.etName)
-            val etUrl = view.findViewById<EditText>(R.id.etUrl)
-
-            AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Yeni Kanal")
-                .setView(view)
-                .setPositiveButton("Ekle") { _, _ ->
-                    val name = etName.text.toString()
-                    val url = etUrl.text.toString()
-                    if (name.isNotEmpty() && url.isNotEmpty()) {
-                        channelList.add(Channel(name, url))
-                        adapter.notifyItemInserted(channelList.size - 1)
-                    }
-                }
-                .setNegativeButton("İptal", null)
-                .show()
+            showAddDialog()
         }
 
-        // SÜRÜKLE BIRAK (TAŞIMA)
+        // Taşıma işlemleri
         val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0
         ) {
@@ -71,6 +52,26 @@ class MainActivity : AppCompatActivity() {
             }
             override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {}
         })
-        itemTouchHelper.attachToRecyclerView(recyclerView)
+        itemTouchHelper.attachToRecyclerView(rvChannels)
+    }
+
+    private fun showAddDialog() {
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_add_channel, null)
+        val etName = view.findViewById<EditText>(R.id.etName)
+        val etUrl = view.findViewById<EditText>(R.id.etUrl)
+
+        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Kanal Ekle")
+            .setView(view)
+            .setPositiveButton("Ekle") { _, _ ->
+                val name = etName.text.toString()
+                val url = etUrl.text.toString()
+                if (name.isNotEmpty() && url.isNotEmpty()) {
+                    channelList.add(Channel(name, url))
+                    adapter.notifyItemInserted(channelList.size - 1)
+                }
+            }
+            .setNegativeButton("İptal", null)
+            .show()
     }
 }
