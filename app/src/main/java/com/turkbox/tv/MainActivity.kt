@@ -39,7 +39,7 @@ class MainActivity : FragmentActivity() {
         setupRecyclerView()
     }
 
-    // Kumanda tuşlarını dinler (Sesli arama tuşu için)
+    // Kumanda Mikrofon Tuşunu Dinle
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_SEARCH || keyCode == KeyEvent.KEYCODE_VOICE_ASSIST) {
             startVoiceSearch()
@@ -52,21 +52,19 @@ class MainActivity : FragmentActivity() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "tr-TR")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Kanal ismini söyleyin...")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Hangi kanalı açalım?")
         }
         try {
             startActivityForResult(intent, SPEECH_CODE)
         } catch (e: Exception) {
-            Toast.makeText(this, "Sesli arama cihazınızda aktif değil.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Sesli arama hatası!", Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == SPEECH_CODE && resultCode == Activity.RESULT_OK) {
-            val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            val spokenText = results?.get(0)?.lowercase(Locale("tr")) ?: ""
-            
+            val spokenText = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)?.lowercase(Locale("tr")) ?: ""
             val foundChannel = channelList.find { it.name.lowercase(Locale("tr")).contains(spokenText) }
             
             if (foundChannel != null) {
@@ -74,7 +72,7 @@ class MainActivity : FragmentActivity() {
                 rvChannelList.smoothScrollToPosition(index)
                 rvChannelList.postDelayed({
                     rvChannelList.findViewHolderForAdapterPosition(index)?.itemView?.requestFocus()
-                    playPreview(foundChannel)
+                    playInPreview(foundChannel)
                 }, 500)
             } else {
                 Toast.makeText(this, "'$spokenText' bulunamadı.", Toast.LENGTH_SHORT).show()
@@ -98,13 +96,9 @@ class MainActivity : FragmentActivity() {
             onFocus = { channel -> tvSelectedChannel.text = channel.name },
             onClick = { channel ->
                 if (lastClickedChannelUrl == channel.url) {
-                    val intent = Intent(this, PlaybackActivity::class.java).apply {
-                        putExtra("CHANNEL_NAME", channel.name)
-                        putExtra("CHANNEL_URL", channel.url)
-                    }
-                    startActivity(intent)
+                    openFullScreen(channel)
                 } else {
-                    playPreview(channel)
+                    playInPreview(channel)
                 }
             }
         )
@@ -112,7 +106,7 @@ class MainActivity : FragmentActivity() {
         rvChannelList.adapter = adapter
     }
 
-    private fun playPreview(channel: Channel) {
+    private fun playInPreview(channel: Channel) {
         lastClickedChannelUrl = channel.url
         videoLoader.visibility = View.VISIBLE
         previewVideo.setVideoPath(channel.url)
@@ -121,10 +115,13 @@ class MainActivity : FragmentActivity() {
             mp.setVolume(1.0f, 1.0f)
             mp.start()
         }
-        previewVideo.setOnErrorListener { _, _, _ ->
-            videoLoader.visibility = View.GONE
-            Toast.makeText(this, "Yayın yüklenemedi", Toast.LENGTH_SHORT).show()
-            true
+    }
+
+    private fun openFullScreen(channel: Channel) {
+        val intent = Intent(this, PlaybackActivity::class.java).apply {
+            putExtra("CHANNEL_NAME", channel.name)
+            putExtra("CHANNEL_URL", channel.url)
         }
+        startActivity(intent)
     }
 }
