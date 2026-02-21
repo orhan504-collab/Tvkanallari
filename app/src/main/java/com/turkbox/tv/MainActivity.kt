@@ -15,6 +15,7 @@ class MainActivity : FragmentActivity() {
     private lateinit var previewVideo: VideoView
     private lateinit var tvSelectedChannel: TextView
     private val channelList = mutableListOf<Channel>()
+    private var lastClickedChannelUrl: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,30 +54,49 @@ class MainActivity : FragmentActivity() {
         val adapter = CustomChannelAdapter(
             channelList,
             onFocus = { channel: Channel ->
-                // Kanal üstüne gelince önizleme yap
+                // Üstüne gelince sadece ismi yazsın (Gereksiz trafik ve ses kirliliğini önler)
                 tvSelectedChannel.text = channel.name
-                try {
-                    previewVideo.setVideoPath(channel.url)
-                    previewVideo.setOnPreparedListener { mp ->
-                        mp.setVolume(0f, 0f) // Sessiz önizleme
-                        mp.start()
-                    }
-                    previewVideo.setOnErrorListener { _, _, _ -> true }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
             },
             onClick = { channel: Channel ->
-                // Tıklayınca tam ekran oynatıcıya git
-                val intent = Intent(this, PlaybackActivity::class.java).apply {
-                    putExtra("CHANNEL_NAME", channel.name)
-                    putExtra("CHANNEL_URL", channel.url)
+                // EĞER AYNI KANALA 2. KEZ TIKLANIRSA VEYA ZATEN ÇERÇEVEDE OYNUYORSA TAM EKRAN YAP
+                if (lastClickedChannelUrl == channel.url) {
+                    openFullScreen(channel)
+                } else {
+                    // İLK TIKLAMADA: Sağdaki çerçeve içinde videoyu başlat
+                    lastClickedChannelUrl = channel.url
+                    tvSelectedChannel.text = "Oynatılıyor: ${channel.name}"
+                    
+                    try {
+                        previewVideo.setVideoPath(channel.url)
+                        previewVideo.setOnPreparedListener { mp ->
+                            mp.setVolume(1.0f, 1.0f) // Sesi aç
+                            mp.start()
+                        }
+                        previewVideo.setOnErrorListener { _, _, _ -> 
+                            tvSelectedChannel.text = "Yayın açılamadı: ${channel.name}"
+                            true 
+                        }
+                        
+                        // Sağdaki video çerçevesine tıklanırsa da tam ekran yap
+                        previewVideo.setOnClickListener {
+                            openFullScreen(channel)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
-                startActivity(intent)
             }
         )
         
         rvChannelList.layoutManager = LinearLayoutManager(this)
         rvChannelList.adapter = adapter
+    }
+
+    private fun openFullScreen(channel: Channel) {
+        val intent = Intent(this, PlaybackActivity::class.java).apply {
+            putExtra("CHANNEL_NAME", channel.name)
+            putExtra("CHANNEL_URL", channel.url)
+        }
+        startActivity(intent)
     }
 }
