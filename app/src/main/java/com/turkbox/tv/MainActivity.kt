@@ -11,36 +11,43 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val fragment = BrowseSupportFragment()
-        supportFragmentManager.beginTransaction().replace(R.id.main_frame, fragment).commit()
+        // Fragment'ı güvenli bir şekilde başlatıyoruz
+        val fragment = supportFragmentManager.findFragmentById(R.id.main_browse_fragment) as? BrowseSupportFragment 
+            ?: BrowseSupportFragment()
+
+        if (!fragment.isAdded) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.main_frame, fragment)
+                .commit()
+        }
         
         fragment.title = "TurkBox TV"
-        fragment.headersState = BrowseSupportFragment.HEADERS_ENABLED
-        
         setupAdapter(fragment)
     }
 
     private fun setupAdapter(fragment: BrowseSupportFragment) {
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-        val cardPresenter = CardPresenter()
-        val listRowAdapter = ArrayObjectAdapter(cardPresenter)
+        val listRowAdapter = ArrayObjectAdapter(CardPresenter())
 
-        // Assets içindeki JSON'ı oku
-        val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
-        val jsonArray = JSONObject(jsonString).getJSONArray("channels")
+        try {
+            val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
+            val jsonArray = JSONObject(jsonString).getJSONArray("channels")
 
-        for (i in 0 until jsonArray.length()) {
-            val obj = jsonArray.getJSONObject(i)
-            listRowAdapter.add(Channel(
-                obj.getInt("id"),
-                obj.getString("name"),
-                obj.getString("url"),
-                obj.getString("logo")
-            ))
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                listRowAdapter.add(Channel(
+                    obj.getInt("id"),
+                    obj.getString("name"),
+                    obj.getString("url"),
+                    obj.getString("logo")
+                ))
+            }
+        } catch (e: Exception) {
+            // Eğer JSON okunamazsa uygulama çökmesin diye boş bir kanal ekleyelim
+            listRowAdapter.add(Channel(0, "Kanal Listesi Yüklenemedi", "", ""))
         }
 
-        val header = HeaderItem(0, "Canlı Kanallar")
-        rowsAdapter.add(ListRow(header, listRowAdapter))
+        rowsAdapter.add(ListRow(HeaderItem(0, "Kanallar"), listRowAdapter))
         fragment.adapter = rowsAdapter
     }
 }
