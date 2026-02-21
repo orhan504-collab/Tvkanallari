@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini TV Arayüzü</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --sidebar-color: #1a1a1a;
+            --accent-color: #ff0000;
+            --text-color: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sol Kanal Listesi */
+        #sidebar {
+            width: 300px;
+            background-color: var(--sidebar-color);
+            border-right: 1px solid #333;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .channel-item {
+            padding: 15px;
+            border-bottom: 1px solid #2a2a2a;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .channel-item:hover {
+            background-color: #333;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .channel-item.active {
+            background-color: #222;
+            color: var(--accent-color);
+        }
+
+        /* Sağ Oynatıcı Alanı */
+        #main-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #222 0%, #000 100%);
+            position: relative;
+        }
+
+        #video-container {
+            width: 90%;
+            max-width: 1000px;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border: 2px solid #333;
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .info-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        /* Kaydırma Çubuğu Tasarımı */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #666; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div style="padding: 20px; font-weight: bold; font-size: 20px; color: var(--accent-color); border-bottom: 2px solid #333;">
+        📺 KANAL LİSTESİ
+    </div>
+    <div id="channel-list">
+        </div>
+</div>
+
+<div id="main-view">
+    <div id="video-container">
+        <video id="video" controls></video>
+        <div class="info-overlay" id="channel-name-display">Kanal Seçiniz</div>
+    </div>
+</div>
+
+<script>
+    // Sizin gönderdiğiniz JSON verisi
+    const channelData = {
+        "channels": [
+            { "name": "4U TV (720p)", "url": "https://hls.4utv.live/hls/stream.m3u8" },
+            { "name": "24 TV (1080p)", "url": "https://mn-nl.mncdn.com/kanal24/smil:kanal24.smil/playlist.m3u8" },
+            { "name": "360 TV (720p)", "url": "https://turkmedya-live.ercdn.net/tv360/tv360.m3u8" },
+            { "name": "Show TV (1080p)", "url": "https://ciner-live.daioncdn.net/showtv/showtv.m3u8" },
+            { "name": "Star TV (1080p)", "url": "https://dogus-live.daioncdn.net/startv/startv.m3u8" },
+            { "name": "Kanal D (1080p)", "url": "https://demiroren.daioncdn.net/kanald/kanald.m3u8?app=kanald_web&ce=3" },
+            { "name": "ATV", "url": "http://89.187.191.41/ATV-HD-TR/video.m3u8" },
+            { "name": "TRT 1 (1080p)", "url": "https://trt.daioncdn.net/trt-1/master.m3u8" },
+            { "name": "TV 8 (1080p)", "url": "https://tv8.daioncdn.net/tv8/tv8.m3u8" }
+            // ... Diğer kanalları buraya ekleyebilirsiniz
+        ]
+    };
+
+    const video = document.getElementById('video');
+    const channelList = document.getElementById('channel-list');
+    const nameDisplay = document.getElementById('channel-name-display');
+    const hls = new Hls();
+
+    function playChannel(url, name) {
+        nameDisplay.innerText = name;
+        if (Hls.isSupported()) {
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play();
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.addEventListener('loadedmetadata', function() {
+                video.play();
+            });
+        }
+    }
+
+    // Listeyi Oluştur
+    channelData.channels.forEach(channel => {
+        const item = document.createElement('div');
+        item.className = 'channel-item';
+        item.innerText = channel.name;
+
+        // Üstüne gelince (Hover) görsel çerçevede açılır (Preview)
+        item.addEventListener('mouseenter', () => {
+            playChannel(channel.url, channel.name);
+            video.muted = true; // Önizleme sırasında ses kapalı olsun
+        });
+
+        // Tıklayınca tam ekran yap
+        item.addEventListener('click', () => {
+            video.muted = false; // Tıklayınca sesi aç
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                video.webkitRequestFullscreen();
+            } else if (video.msRequestFullscreen) {
+                video.msRequestFullscreen();
+            }
+        });
+
+        channelList.appendChild(item);
+    });
+</script>
+
+</body>
+</html>
