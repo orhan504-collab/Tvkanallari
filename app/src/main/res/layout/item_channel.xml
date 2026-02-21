@@ -2,28 +2,27 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="85dp"
+    android:layout_height="75dp"
     android:layout_margin="6dp"
     android:focusable="true"
     android:clickable="true"
-    app:cardCornerRadius="15dp"
+    app:cardCornerRadius="12dp"
     app:cardBackgroundColor="#222222"
-    app:cardElevation="6dp">
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:padding="10dp">
 
         <ImageView
             android:id="@+id/imgChannelLogo"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
-            android:background="#33FFFFFF" 
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:scaleType="centerInside"
+            android:background="#1AFFFFFF"
             android:padding="5dp" />
 
         <TextView
