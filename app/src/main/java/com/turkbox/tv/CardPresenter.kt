@@ -19,8 +19,8 @@ class CardPresenter : Presenter() {
         val channel = item as Channel
         val cardView = viewHolder.view as ImageCardView
         cardView.titleText = channel.name
+        cardView.contentText = "Canlı Yayın"
         cardView.setMainImageDimensions(313, 176)
-        cardView.cardType = ImageCardView.CARD_TYPE_MAIN_ONLY
     }
 
     override fun onUnbindViewHolder(viewHolder: ViewHolder) {}
