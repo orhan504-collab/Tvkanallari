@@ -12,6 +12,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Fragment'ı güvenli bir şekilde ekleyelim
         val fragment = BrowseSupportFragment()
         supportFragmentManager.beginTransaction()
             .replace(R.id.main_frame, fragment)
@@ -27,27 +28,28 @@ class MainActivity : FragmentActivity() {
         val listRowAdapter = ArrayObjectAdapter(cardPresenter)
 
         try {
-            // Assets klasöründeki dosyayı oku
-            val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
+            // Assets klasöründeki dosyayı okumaya çalışıyoruz
+            val inputStream = assets.open("channels.json")
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
             
-            // Senin JSON yapın direkt liste ([]) olarak başlıyorsa:
+            // JSON içeriği bir liste ([]) olarak başlıyorsa bu yöntem kullanılır
             val jsonArray = JSONArray(jsonString)
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
                 listRowAdapter.add(Channel(
-                    i, // ID olarak sıra numarasını veriyoruz
-                    obj.getString("name"),
-                    obj.getString("url"),
-                    obj.getString("logo")
+                    i,
+                    obj.optString("name", "Bilinmeyen Kanal"),
+                    obj.optString("url", ""),
+                    obj.optString("logo", "")
                 ))
             }
         } catch (e: Exception) {
-            // Hata durumunda ekrana hata bilgisini basan bir kart ekle
-            listRowAdapter.add(Channel(0, "Hata: ${e.message}", "", ""))
+            // Çökmeyi engelle: Hata mesajını kart olarak ekranda göster
+            listRowAdapter.add(Channel(0, "Hata: ${e.localizedMessage}", "", ""))
         }
 
-        val header = HeaderItem(0, "Canlı Kanallar")
+        val header = HeaderItem(0, "Canlı Yayınlar")
         rowsAdapter.add(ListRow(header, listRowAdapter))
         fragment.adapter = rowsAdapter
     }
