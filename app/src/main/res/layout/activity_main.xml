@@ -11,7 +11,8 @@
         android:layout_width="320dp"
         android:layout_height="match_parent"
         android:background="#121212"
-        android:padding="8dp" />
+        android:padding="8dp"
+        android:nextFocusRight="@id/videoCard" />
 
     <RelativeLayout
         android:layout_width="0dp"
@@ -26,7 +27,9 @@
             android:layout_centerInParent="true"
             app:cardCornerRadius="20dp"
             app:cardElevation="15dp"
-            app:cardBackgroundColor="#000">
+            app:cardBackgroundColor="#000"
+            android:focusable="true"
+            android:clickable="true">
 
             <FrameLayout
                 android:layout_width="match_parent"
@@ -58,14 +61,6 @@
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:textStyle="bold" />
-            
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:text="Sesli arama için kumandadaki Mikrofon tuşuna basın"
-            android:textColor="#555555"
-            android:textSize="12sp" />
+
     </RelativeLayout>
 </LinearLayout>
