@@ -5,6 +5,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.*
 import org.json.JSONObject
+import java.io.IOException
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,15 +23,12 @@ class MainActivity : FragmentActivity() {
 
     private fun setupAdapter(fragment: BrowseSupportFragment) {
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-        val cardPresenter = CardPresenter()
-        val listRowAdapter = ArrayObjectAdapter(cardPresenter)
+        val listRowAdapter = ArrayObjectAdapter(CardPresenter())
 
         try {
-            // Assets klasöründeki dosyayı güvenli açma
-            val inputStream = assets.open("channels.json")
-            val jsonString = inputStream.bufferedReader().use { it.readText() }
-            val jsonObject = JSONObject(jsonString)
-            val jsonArray = jsonObject.getJSONArray("channels")
+            // Dosyayı assets'ten okumaya çalış
+            val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
+            val jsonArray = JSONObject(jsonString).getJSONArray("channels")
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
@@ -42,11 +40,15 @@ class MainActivity : FragmentActivity() {
                 ))
             }
         } catch (e: Exception) {
-            // Hata olursa boş kalmasın, hata mesajını kart olarak gösterelim
-            listRowAdapter.add(Channel(0, "Hata: ${e.message}", "", ""))
+            // HATA DURUMU: Ekranda neyin yanlış olduğunu gösteren bir kart oluştur
+            val hataMesaji = when(e) {
+                is IOException -> "Dosya Bulunamadı (assets/channels.json)"
+                else -> "JSON Hatası: ${e.message}"
+            }
+            listRowAdapter.add(Channel(0, hataMesaji, "", ""))
         }
 
-        val header = HeaderItem(0, "Canlı Yayınlar")
+        val header = HeaderItem(0, "Yayın Listesi")
         rowsAdapter.add(ListRow(header, listRowAdapter))
         fragment.adapter = rowsAdapter
     }
