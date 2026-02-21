@@ -1,39 +1,41 @@
 package com.turkbox.tv
 
-import android.os.Bundle
 import android.content.Intent
+import android.os.Bundle
+import android.widget.TextView
+import android.widget.VideoView
 import androidx.fragment.app.FragmentActivity
-import androidx.leanback.app.BrowseSupportFragment
-import androidx.leanback.widget.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import org.json.JSONObject
 
 class MainActivity : FragmentActivity() {
+
+    private lateinit var rvChannelList: RecyclerView
+    private lateinit var previewVideo: VideoView
+    private lateinit var tvSelectedChannel: TextView
+    private val channelList = mutableListOf<Channel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val fragment = BrowseSupportFragment()
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.main_frame, fragment)
-            .commit()
+        rvChannelList = findViewById(R.id.rvChannelList)
+        previewVideo = findViewById(R.id.previewVideoView)
+        tvSelectedChannel = findViewById(R.id.tvSelectedChannel)
 
-        fragment.title = "TurkBox TV"
-        setupAdapter(fragment)
+        loadChannels()
+        setupRecyclerView()
     }
 
-    private fun setupAdapter(fragment: BrowseSupportFragment) {
-        val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-        val cardPresenter = CardPresenter()
-        val listRowAdapter = ArrayObjectAdapter(cardPresenter)
-
+    private fun loadChannels() {
         try {
             val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
-            val jsonObject = JSONObject(jsonString)
-            val jsonArray = jsonObject.getJSONArray("channels")
+            val jsonArray = JSONObject(jsonString).getJSONArray("channels")
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
-                listRowAdapter.add(Channel(
+                channelList.add(Channel(
                     obj.optInt("id", i),
                     obj.getString("name"),
                     obj.getString("url"),
@@ -41,22 +43,34 @@ class MainActivity : FragmentActivity() {
                 ))
             }
         } catch (e: Exception) {
-            listRowAdapter.add(Channel(0, "Hata: ${e.localizedMessage}", "", ""))
+            e.printStackTrace()
         }
+    }
 
-        // TIKLAMA OLAYI BURADA:
-        fragment.onItemViewClickedListener = OnItemViewClickedListener { _, item, _, _ ->
-            if (item is Channel && item.url.isNotEmpty()) {
+    private fun setupRecyclerView() {
+        // Not: Burada senin mevcut CardPresenter yerine basit bir Adapter kullanman gerekir.
+        // Eğer elinde bir Adapter yoksa, hızlıca bir tane oluşturabiliriz.
+        val adapter = CustomChannelAdapter(channelList, 
+            onFocus = { channel ->
+                // Üstüne gelince (Hover/Focus) sağdaki çerçevede sessiz oynat
+                tvSelectedChannel.text = channel.name
+                previewVideo.setVideoPath(channel.url)
+                previewVideo.setOnPreparedListener { mp ->
+                    mp.setVolume(0f, 0f) // Önizleme sessiz olsun
+                    mp.start()
+                }
+            },
+            onClick = { channel ->
+                // Tıklayınca PlaybackActivity'ye (Tam Ekran) git
                 val intent = Intent(this, PlaybackActivity::class.java).apply {
-                    putExtra("CHANNEL_NAME", item.name)
-                    putExtra("CHANNEL_URL", item.url)
+                    putExtra("CHANNEL_NAME", channel.name)
+                    putExtra("CHANNEL_URL", channel.url)
                 }
                 startActivity(intent)
             }
-        }
-
-        val header = HeaderItem(0, "Canlı Yayınlar")
-        rowsAdapter.add(ListRow(header, listRowAdapter))
-        fragment.adapter = rowsAdapter
+        )
+        
+        rvChannelList.layoutManager = LinearLayoutManager(this)
+        rvChannelList.adapter = adapter
     }
 }
