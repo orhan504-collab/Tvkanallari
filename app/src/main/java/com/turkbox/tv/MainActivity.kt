@@ -16,37 +16,46 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var adapter: CustomChannelAdapter
     private var channelList = mutableListOf<Channel>()
+    private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Örnek başlangıç kanalı
+        // Başlangıç kanalı - Sadece isim ve URL
         channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
 
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 4)
         
-        adapter = CustomChannelAdapter(channelList, {}, { channel ->
-            // Burada VideoView veya Player'ı başlatabilirsin
-            Toast.makeText(this, "Açılıyor: ${channel.name}", Toast.LENGTH_SHORT).show()
-        })
+        adapter = CustomChannelAdapter(channelList, 
+            onFocus = { channel -> /* Odaklanma işlemi */ },
+            onClick = { channel -> 
+                Toast.makeText(this, "Açılıyor: ${channel.name}", Toast.LENGTH_SHORT).show()
+            }
+        )
         recyclerView.adapter = adapter
 
         // KANAL EKLEME BUTONU
-        findViewById<FloatingActionButton>(R.id.btnAddChannel).setOnClickListener {
+        val btnAdd = findViewById<FloatingActionButton>(R.id.btnAddChannel)
+        btnAdd.setOnClickListener {
             val view = LayoutInflater.from(this).inflate(R.layout.dialog_add_channel, null)
             val etName = view.findViewById<EditText>(R.id.etName)
             val etUrl = view.findViewById<EditText>(R.id.etUrl)
 
             AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle("Yeni Kanal")
                 .setView(view)
                 .setPositiveButton("Ekle") { _, _ ->
-                    if (etName.text.isNotEmpty() && etUrl.text.isNotEmpty()) {
-                        channelList.add(Channel(etName.text.toString(), etUrl.text.toString()))
+                    val name = etName.text.toString()
+                    val url = etUrl.text.toString()
+                    if (name.isNotEmpty() && url.isNotEmpty()) {
+                        channelList.add(Channel(name, url))
                         adapter.notifyItemInserted(channelList.size - 1)
                     }
-                }.setNegativeButton("İptal", null).show()
+                }
+                .setNegativeButton("İptal", null)
+                .show()
         }
 
         // SÜRÜKLE BIRAK (TAŞIMA)
