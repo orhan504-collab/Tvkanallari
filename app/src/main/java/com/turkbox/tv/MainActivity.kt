@@ -11,18 +11,16 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Fragment'ı güvenli bir şekilde başlatıyoruz
-        val fragment = supportFragmentManager.findFragmentById(R.id.main_browse_fragment) as? BrowseSupportFragment 
-            ?: BrowseSupportFragment()
-
-        if (!fragment.isAdded) {
+        // Sadece ilk açılışta fragment ekle
+        if (savedInstanceState == null) {
+            val browseFragment = BrowseSupportFragment()
             supportFragmentManager.beginTransaction()
-                .replace(R.id.main_frame, fragment)
+                .replace(R.id.main_frame, browseFragment)
                 .commit()
+            
+            browseFragment.title = "TurkBox TV"
+            setupAdapter(browseFragment)
         }
-        
-        fragment.title = "TurkBox TV"
-        setupAdapter(fragment)
     }
 
     private fun setupAdapter(fragment: BrowseSupportFragment) {
@@ -30,6 +28,7 @@ class MainActivity : FragmentActivity() {
         val listRowAdapter = ArrayObjectAdapter(CardPresenter())
 
         try {
+            // Assets klasöründeki json'ı oku
             val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
             val jsonArray = JSONObject(jsonString).getJSONArray("channels")
 
@@ -43,11 +42,12 @@ class MainActivity : FragmentActivity() {
                 ))
             }
         } catch (e: Exception) {
-            // Eğer JSON okunamazsa uygulama çökmesin diye boş bir kanal ekleyelim
-            listRowAdapter.add(Channel(0, "Kanal Listesi Yüklenemedi", "", ""))
+            // Hata olursa en azından bir uyarı kartı göster, uygulama çökmesin
+            listRowAdapter.add(Channel(0, "Yükleme Hatası", "", ""))
         }
 
-        rowsAdapter.add(ListRow(HeaderItem(0, "Kanallar"), listRowAdapter))
+        val header = HeaderItem(0, "Canlı Yayınlar")
+        rowsAdapter.add(ListRow(header, listRowAdapter))
         fragment.adapter = rowsAdapter
     }
 }
