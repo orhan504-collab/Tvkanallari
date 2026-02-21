@@ -9,10 +9,10 @@ import androidx.leanback.widget.Presenter
 class CardPresenter : Presenter() {
     override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         val textView = TextView(parent.context).apply {
-            layoutParams = ViewGroup.LayoutParams(350, 200)
+            layoutParams = ViewGroup.LayoutParams(300, 150)
             isFocusable = true
             isFocusableInTouchMode = true
-            setBackgroundColor(Color.parseColor("#333333"))
+            setBackgroundColor(Color.DKGRAY)
             setTextColor(Color.WHITE)
             gravity = Gravity.CENTER
             setPadding(10, 10, 10, 10)
@@ -25,13 +25,8 @@ class CardPresenter : Presenter() {
         val textView = viewHolder.view as TextView
         textView.text = channel.name
         
-        // Odaklandığında renk değiştirme efekti
         textView.setOnFocusChangeListener { v, hasFocus ->
-            if (hasFocus) {
-                v.setBackgroundColor(Color.parseColor("#FF0000")) // Kırmızı (Odak)
-            } else {
-                v.setBackgroundColor(Color.parseColor("#333333")) // Gri (Normal)
-            }
+            v.setBackgroundColor(if (hasFocus) Color.RED else Color.DKGRAY)
         }
     }
 
