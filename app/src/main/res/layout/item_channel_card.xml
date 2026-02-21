@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.leanback.widget.ImageCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:lb="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/channel_card"
+    android:layout_width="250dp"
+    android:layout_height="140dp"
+    lb:cardType="mainOnly"
+    lb:infoVisibility="always"
+    android:focusable="true"
+    android:focusableInTouchMode="true" />
