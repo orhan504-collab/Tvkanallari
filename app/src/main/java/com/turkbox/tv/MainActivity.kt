@@ -1,12 +1,36 @@
+package com.turkbox.tv
+
+import android.os.Bundle
+import androidx.fragment.app.FragmentActivity
+import androidx.leanback.app.BrowseSupportFragment
+import androidx.leanback.widget.*
+import org.json.JSONObject
+import java.io.IOException
+
+class MainActivity : FragmentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val fragment = BrowseSupportFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.main_frame, fragment)
+            .commit()
+
+        fragment.title = "TurkBox TV"
+        setupAdapter(fragment)
+    }
+
     private fun setupAdapter(fragment: BrowseSupportFragment) {
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
         val cardPresenter = CardPresenter()
         val listRowAdapter = ArrayObjectAdapter(cardPresenter)
 
         try {
+            // Assets klasöründen dosyayı oku
             val jsonString = assets.open("channels.json").bufferedReader().use { it.readText() }
             
-            // DÜZELTME: Önce ana nesneyi al, sonra içindeki "channels" listesini çek
+            // JSON paketini aç ve "channels" listesini al
             val jsonObject = JSONObject(jsonString)
             val jsonArray = jsonObject.getJSONArray("channels")
 
@@ -20,7 +44,7 @@
                 ))
             }
         } catch (e: Exception) {
-            // Hata olursa burada detaylıca görelim
+            // Hata mesajını ekrana basan bir kart oluştur
             listRowAdapter.add(Channel(0, "Veri Hatası: ${e.localizedMessage}", "", ""))
         }
 
@@ -28,4 +52,4 @@
         rowsAdapter.add(ListRow(header, listRowAdapter))
         fragment.adapter = rowsAdapter
     }
-    
+}
