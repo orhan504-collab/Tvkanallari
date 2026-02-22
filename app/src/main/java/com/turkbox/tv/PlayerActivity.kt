@@ -11,7 +11,8 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Tasarımın sadeliği için sadece PlayerView
+        
+        // Görseli korumak için XML yerine kodla oluşturuyoruz (Hata riskini azaltır)
         val playerView = PlayerView(this)
         setContentView(playerView)
 
@@ -20,9 +21,9 @@ class PlayerActivity : AppCompatActivity() {
         player = ExoPlayer.Builder(this).build().apply {
             playerView.player = this
             val mediaItem = MediaItem.fromUri(videoUrl)
-            setMediaItem(mediaItem)
-            prepare()
-            play()
+            this.setMediaItem(mediaItem)
+            this.prepare()
+            this.play()
         }
     }
 
