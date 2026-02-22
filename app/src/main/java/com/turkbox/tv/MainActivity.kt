@@ -28,12 +28,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var previewView: PlayerView
     private lateinit var recyclerView: RecyclerView
     
-    // Çift tıklama ve Kanal No kontrolü için
+    // Kanal Numarası Tuşlama Ayarları
+    private var inputBuffer = StringBuilder()
+    private val handler = Handler(Looper.getMainLooper())
+    private val jumpRunnable = Runnable { processChannelJump() }
+    
     private var lastClickTime: Long = 0
     private val doubleClickTimeout = 300L
-    private var inputNumber = ""
-    private val handler = Handler(Looper.getMainLooper())
-    private val inputRunnable = Runnable { processChannelNumber() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +42,9 @@ class MainActivity : AppCompatActivity() {
 
         previewView = findViewById(R.id.previewPlayerView)
         setupPreviewPlayer()
-        loadChannelsFromJson()
+        
+        // Kanalları yükle ve numaralandır
+        loadChannelsWithIds()
 
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -54,8 +57,6 @@ class MainActivity : AppCompatActivity() {
         )
         
         recyclerView.adapter = adapter
-
-        // 1. ÖZELLİK: SÜRÜKLE-BIRAK SIRALAMA
         setupDragAndDrop()
 
         findViewById<FloatingActionButton>(R.id.btnAddChannel).setOnClickListener { showAddDialog() }
@@ -66,7 +67,7 @@ class MainActivity : AppCompatActivity() {
         previewView.player = previewPlayer
     }
 
-    private fun loadChannelsFromJson() {
+    private fun loadChannelsWithIds() {
         try {
             val inputStream: InputStream = assets.open("channels.json")
             val json = inputStream.bufferedReader().use { it.readText() }
@@ -74,60 +75,79 @@ class MainActivity : AppCompatActivity() {
             channelList.clear()
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
-                channelList.add(Channel(obj.getString("name"), obj.getString("url")))
+                // i + 1 yaparak 1, 2, 3... diye numara veriyoruz
+                channelList.add(Channel(i + 1, obj.getString("name"), obj.getString("url")))
             }
         } catch (e: Exception) {
             if (channelList.isEmpty()) {
-                channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
+                channelList.add(Channel(1, "TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
             }
         }
     }
 
-    // 2. ÖZELLİK: KUMANDA RAKAM TUŞLARI DİNAMİĞİ
+    // --- KANAL NUMARASI TUŞLAMA MANTIĞI ---
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
-            val number = keyCode - KeyEvent.KEYCODE_0
-            inputNumber += number.toString()
+            val digit = keyCode - KeyEvent.KEYCODE_0
+            inputBuffer.append(digit)
             
-            handler.removeCallbacks(inputRunnable)
-            handler.postDelayed(inputRunnable, 1500) // 1.5 saniye sonra kanala git
+            handler.removeCallbacks(jumpRunnable)
+            handler.postDelayed(jumpRunnable, 1200) // 1.2 saniye bekle
             
-            Toast.makeText(this, "Kanal: $inputNumber", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Numara: $inputBuffer", Toast.LENGTH_SHORT).show()
             return true
         }
         return super.onKeyDown(keyCode, event)
     }
 
-    private fun processChannelNumber() {
-        val channelIdx = inputNumber.toIntOrNull()?.minus(1) 
-        if (channelIdx != null && channelIdx >= 0 && channelIdx < channelList.size) {
-            val targetChannel = channelList[channelIdx]
-            recyclerView.scrollToPosition(channelIdx)
-            // İlgili satırı seçili hale getirmek için odakla
-            recyclerView.postDelayed({
-                recyclerView.findViewHolderForAdapterPosition(channelIdx)?.itemView?.requestFocus()
-            }, 100)
-            playInPreview(targetChannel.url)
-        } else {
-            Toast.makeText(this, "Kanal bulunamadı", Toast.LENGTH_SHORT).show()
+    private fun processChannelJump() {
+        val targetNo = inputBuffer.toString().toIntOrNull()
+        inputBuffer.setLength(0)
+
+        if (targetNo != null) {
+            val index = channelList.indexOfFirst { it.id == targetNo }
+            if (index != -1) {
+                recyclerView.scrollToPosition(index)
+                recyclerView.postDelayed({
+                    val vh = recyclerView.findViewHolderForAdapterPosition(index)
+                    vh?.itemView?.requestFocus()
+                    playInPreview(channelList[index].url)
+                }, 200)
+            } else {
+                Toast.makeText(this, "Kanal $targetNo bulunamadı", Toast.LENGTH_SHORT).show()
+            }
         }
-        inputNumber = ""
     }
 
+    // --- SÜRÜKLE-BIRAK VE YENİDEN NUMARALANDIRMA ---
     private fun setupDragAndDrop() {
         val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0
         ) {
             override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
-                val fromPos = vh.adapterPosition
-                val toPos = target.adapterPosition
-                Collections.swap(channelList, fromPos, toPos)
-                adapter.notifyItemMoved(fromPos, toPos)
+                val from = vh.adapterPosition
+                val to = target.adapterPosition
+                
+                Collections.swap(channelList, from, to)
+                
+                // Yer değişince numaraları (ID) tekrar güncelle
+                reassignChannelIds()
+                
+                adapter.notifyItemMoved(from, to)
+                // Numaralar değiştiği için listeyi tazele
+                adapter.notifyItemRangeChanged(0, channelList.size)
+                
                 return true
             }
             override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {}
         })
         itemTouchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    private fun reassignChannelIds() {
+        for (i in 0 until channelList.size) {
+            channelList[i].id = i + 1
+        }
     }
 
     private fun playInPreview(url: String) {
@@ -171,7 +191,8 @@ class MainActivity : AppCompatActivity() {
                     0 -> showEditDialog(channel, position)
                     1 -> {
                         channelList.removeAt(position)
-                        adapter.notifyItemRemoved(position)
+                        reassignChannelIds() // Silince numaraları düzelt
+                        adapter.notifyDataSetChanged()
                     }
                 }
             }.show()
@@ -204,7 +225,8 @@ class MainActivity : AppCompatActivity() {
                 val name = etName.text.toString().trim()
                 val url = etUrl.text.toString().trim()
                 if (name.isNotEmpty() && url.isNotEmpty()) {
-                    channelList.add(Channel(name, url))
+                    // Listeye eklerken yeni numara ver
+                    channelList.add(Channel(channelList.size + 1, name, url))
                     adapter.notifyItemInserted(channelList.size - 1)
                 }
             }.show()
