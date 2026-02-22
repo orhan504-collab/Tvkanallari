@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity() {
             if (channelList.isEmpty()) {
                 channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
             channelList.add(Channel("Show TV", "https://mn-nl.mncdn.com/blutv_showtv/smil:show_sd.smil/playlist.m3u8"))
-channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
+ channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
 channelList.add(Channel("Kanal D", "https://demiroren.daioncdn.net/kanald/kanald.m3u8?app=kanald_web"))
 channelList.add(Channel("ATV", "https://trkvz-live.daioncdn.net/atv/atv.m3u8"))
 channelList.add(Channel("NOW TV", "https://uycyyuuzyh.turknet.ercdn.net/nphindgytw/nowtv/nowtv.m3u8"))
