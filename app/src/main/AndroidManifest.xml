@@ -8,13 +8,16 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <application
+        
         android:allowBackup="true"
         android:label="TurkBox TV" 
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:usesCleartextTraffic="true">
-
         <activity 
+            android:name=".WebPlayerActivity" 
+            android:screenOrientation="landscape" 
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:name=".MainActivity" 
             android:exported="true">
             <intent-filter>
