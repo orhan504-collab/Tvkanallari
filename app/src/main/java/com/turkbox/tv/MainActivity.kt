@@ -2,10 +2,9 @@ package com.turkbox.tv
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
@@ -14,6 +13,8 @@ import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import org.json.JSONArray
+import java.io.InputStream
 
 class MainActivity : AppCompatActivity() {
     private lateinit var adapter: CustomChannelAdapter
@@ -21,7 +22,6 @@ class MainActivity : AppCompatActivity() {
     private var previewPlayer: ExoPlayer? = null
     private lateinit var previewView: PlayerView
     
-    // Çift tıklama kontrolü için
     private var lastClickTime: Long = 0
     private val doubleClickTimeout = 300L
 
@@ -29,36 +29,50 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // 1. Oynatıcıyı Hazırla
         previewView = findViewById(R.id.previewPlayerView)
         setupPreviewPlayer()
 
-        val rv = findViewById<RecyclerView>(R.id.recyclerView)
-        rv.layoutManager = LinearLayoutManager(this) // Alt alta dizilim
+        // 2. JSON'dan Kanalları Yükle
+        loadChannelsFromJson()
 
-        // Adapter Yapılandırması
-        adapter = CustomChannelAdapter(channelList, { channel ->
-            // KUMANDA İLE ÜSTÜNE GELİNDİĞİNDE (FOCUS)
-            playInPreview(channel.url)
-        }, { channel ->
-            // TIKLAMA MANTIĞI (TELEFON VE KUMANDA)
-            handleInteraction(channel)
-        })
+        // 3. RecyclerView Ayarları
+        val rv = findViewById<RecyclerView>(R.id.recyclerView)
+        rv.layoutManager = LinearLayoutManager(this)
+
+        // 4. Adapter Kurulumu (Zapping, Tıklama ve Uzun Basma Desteği)
+        adapter = CustomChannelAdapter(
+            channelList,
+            onFocus = { channel -> playInPreview(channel.url) }, // Kumanda ile geçiş
+            onClick = { channel -> handleInteraction(channel) }, // Tek/Çift Tıklama
+            onLongClick = { channel, position -> showOptionsDialog(channel, position) } // Sil/Düzenle
+        )
         
         rv.adapter = adapter
 
         findViewById<FloatingActionButton>(R.id.btnAddChannel).setOnClickListener { showAddDialog() }
-
-        // Örnek Kanallar
-        if (channelList.isEmpty()) {
-            channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
-            channelList.add(Channel("ATV", "https://www.atv.com.tr/canli-yayin"))
-            adapter.notifyDataSetChanged()
-        }
     }
 
     private fun setupPreviewPlayer() {
         previewPlayer = ExoPlayer.Builder(this).build()
         previewView.player = previewPlayer
+    }
+
+    private fun loadChannelsFromJson() {
+        try {
+            val inputStream: InputStream = assets.open("channels.json")
+            val json = inputStream.bufferedReader().use { it.readText() }
+            val jsonArray = JSONArray(json)
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                channelList.add(Channel(obj.getString("name"), obj.getString("url")))
+            }
+        } catch (e: Exception) {
+            // JSON yoksa veya hata verirse örnekleri ekle
+            if (channelList.isEmpty()) {
+                channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
+            }
+        }
     }
 
     private fun playInPreview(url: String) {
@@ -67,16 +81,16 @@ class MainActivity : AppCompatActivity() {
             previewPlayer?.setMediaItem(mediaItem)
             previewPlayer?.prepare()
             previewPlayer?.play()
+        } else {
+            previewPlayer?.stop() // Web linki ise önizlemeyi durdur
         }
     }
 
     private fun handleInteraction(channel: Channel) {
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastClickTime < doubleClickTimeout) {
-            // ÇİFT TIKLAMA VEYA KUMANDA İLE SEÇİM -> TAM EKRAN
             openFullScreen(channel.url)
         } else {
-            // TEK TIKLAMA -> SAĞDA ÖNİZLEME
             playInPreview(channel.url)
         }
         lastClickTime = currentTime
@@ -93,6 +107,39 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    private fun showOptionsDialog(channel: Channel, position: Int) {
+        val options = arrayOf("Düzenle", "Sil")
+        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle(channel.name)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showEditDialog(channel, position)
+                    1 -> {
+                        channelList.removeAt(position)
+                        adapter.notifyItemRemoved(position)
+                        Toast.makeText(this, "Kanal Silindi", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }.show()
+    }
+
+    private fun showEditDialog(channel: Channel, position: Int) {
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_channel, null)
+        val etName = dialogView.findViewById<EditText>(R.id.etName)
+        val etUrl = dialogView.findViewById<EditText>(R.id.etUrl)
+
+        etName.setText(channel.name)
+        etUrl.setText(channel.url)
+
+        builder.setView(dialogView).setTitle("Kanalı Düzenle")
+            .setPositiveButton("GÜNCELLE") { _, _ ->
+                channel.name = etName.text.toString()
+                channel.url = etUrl.text.toString()
+                adapter.notifyItemChanged(position)
+            }.setNegativeButton("İPTAL", null).show()
+    }
+
     private fun showAddDialog() {
         val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_channel, null)
@@ -107,7 +154,7 @@ class MainActivity : AppCompatActivity() {
                     channelList.add(Channel(name, url))
                     adapter.notifyItemInserted(channelList.size - 1)
                 }
-            }.show()
+            }.setNegativeButton("İPTAL", null).show()
     }
 
     override fun onDestroy() {
