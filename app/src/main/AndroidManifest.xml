@@ -8,17 +8,16 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <application
-        
         android:allowBackup="true"
-        android:label="TurkBox TV" 
+        android:label="TurkBox TV"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:usesCleartextTraffic="true">
-        <activity 
-            android:name=".WebPlayerActivity" 
-            android:screenOrientation="landscape" 
+
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:name=".MainActivity" 
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,16 +26,18 @@
             </intent-filter>
         </activity>
 
-        <activity 
-            android:name=".PlayerActivity" 
+        <activity
+            android:name=".PlayerActivity"
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false" />
 
-        <activity 
-            android:name=".PlaybackActivity" 
+        <activity
+            android:name=".WebPlayerActivity"
             android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false" />
 
     </application>
+
 </manifest>
