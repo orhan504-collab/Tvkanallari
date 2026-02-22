@@ -16,41 +16,55 @@ class CustomChannelAdapter(
 ) : RecyclerView.Adapter<CustomChannelAdapter.ViewHolder>() {
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        val card: CardView = v as CardView
+        val card: CardView = v.findViewById(R.id.cardView) // XML'deki CardView ID'niz
         val name: TextView = v.findViewById(R.id.tvChannelName)
     }
 
-    override fun onCreateViewHolder(p: ViewGroup, t: Int) = ViewHolder(
-        LayoutInflater.from(p.context).inflate(R.layout.item_channel, p, false)
-    )
+    override fun onCreateViewHolder(p: ViewGroup, t: Int): ViewHolder {
+        val view = LayoutInflater.from(p.context).inflate(R.layout.item_channel, p, false)
+        return ViewHolder(view)
+    }
 
     override fun onBindViewHolder(h: ViewHolder, p: Int) {
         val c = channels[p]
         h.name.text = c.name
 
+        // Odaklanma (Focus) Efekti - TV Kumandası için
         h.itemView.setOnFocusChangeListener { view, hasFocus ->
             if (hasFocus) {
-                view.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
-                h.card.setCardBackgroundColor(Color.parseColor("#E50914"))
+                // Seçiliyken büyü ve kırmızı ol
+                view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
+                h.card.setCardBackgroundColor(Color.parseColor("#E50914")) 
+                h.name.setTextColor(Color.WHITE)
                 onFocus(c)
             } else {
-                view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()
-                h.card.setCardBackgroundColor(Color.parseColor("#222222"))
+                // Seçili değilken eski haline dön
+                view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
+                h.card.setCardBackgroundColor(Color.parseColor("#333333")) // Standart koyu gri
+                h.name.setTextColor(Color.LTGRAY)
             }
         }
 
-        h.itemView.setOnClickListener { onClick(c) }
+        // Tıklama (OK Tuşu) Mantığı
+        h.itemView.setOnClickListener {
+            onClick(c)
+        }
 
+        // Uzun Basma (Kanalı Silme) Mantığı
         h.itemView.setOnLongClickListener {
             AlertDialog.Builder(h.itemView.context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                 .setTitle("Kanalı Sil")
-                .setMessage("${c.name} silinsin mi?")
-                .setPositiveButton("Sil") { _, _ ->
+                .setMessage("${c.name} kanalını listeden kaldırmak istiyor musunuz?")
+                .setPositiveButton("Evet") { _, _ ->
                     val pos = h.adapterPosition
-                    channels.removeAt(pos)
-                    notifyItemRemoved(pos)
+                    if (pos != RecyclerView.NO_POSITION) {
+                        channels.removeAt(pos)
+                        notifyItemRemoved(pos)
+                        // Not: MainActivity içinde saveChannels() çağrısı yapılması gerekir.
+                    }
                 }
-                .setNegativeButton("İptal", null).show()
+                .setNegativeButton("Hayır", null)
+                .show()
             true
         }
     }
