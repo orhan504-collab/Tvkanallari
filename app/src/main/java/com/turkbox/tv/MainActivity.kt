@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         })
         rv.adapter = adapter
 
-        // Ekleme Butonu (XML ID: btnAddChannel)
+        // XML ID: btnAddChannel
         val btnAdd = findViewById<FloatingActionButton>(R.id.btnAddChannel)
         btnAdd.setOnClickListener {
             showAddDialog()
@@ -42,12 +42,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleChannelSelection(channel: Channel) {
         if (channel.url.contains(".m3u8") || channel.url.contains(".ts")) {
-            // Doğrudan yayın linki
             val intent = Intent(this, PlayerActivity::class.java)
             intent.putExtra("url", channel.url)
             startActivity(intent)
         } else {
-            // Web sayfası linki (WebView ile aç)
+            // WebPlayerActivity sınıfı oluşturulmuş olmalıdır
             val intent = Intent(this, WebPlayerActivity::class.java)
             intent.putExtra("url", channel.url)
             startActivity(intent)
