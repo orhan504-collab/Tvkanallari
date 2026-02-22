@@ -6,5 +6,5 @@ data class Channel(
     @SerializedName("name") var name: String,
     @SerializedName("url") var url: String,
     @SerializedName("logo") var logo: String? = null,
-    var id: Int = 0 // id'yi sona aldık ve varsayılan değer verdik
+    var id: Int = 0
 )
