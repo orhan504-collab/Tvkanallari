@@ -12,14 +12,14 @@ class CustomChannelAdapter(
     var channels: MutableList<Channel>,
     private val onFocus: (Channel) -> Unit,
     private val onClick: (Channel) -> Unit,
-    private val onLongClick: (Channel, Int) -> Unit // Silme/Düzenleme için eklendi
+    private val onLongClick: (Channel, Int) -> Unit
 ) : RecyclerView.Adapter<CustomChannelAdapter.ViewHolder>() {
 
     private var lastClickTime: Long = 0
     private val doubleClickTimeout = 300L
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        val cardView: CardView = v as CardView
+        val cardView: CardView = v.findViewById(R.id.cardView) // layout dosmandaki ID ile eşleşmeli
         val name: TextView = v.findViewById(R.id.tvChannelName)
     }
 
@@ -30,34 +30,38 @@ class CustomChannelAdapter(
 
     override fun onBindViewHolder(h: ViewHolder, p: Int) {
         val c = channels[p]
-        h.name.text = c.name
+        
+        // 1. KANAL NUMARASINI VE İSMİNİ SET ET
+        h.name.text = "${c.id}. ${c.name}"
 
-        // KANAL GEÇİŞLERİNDE RENK DEĞİŞİMİ (ZAPPING)
+        // 2. ODAKLANMA (FOCUS) EFEKTİ VE ZAPPING
         h.itemView.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                // Kumanda ile üzerine gelince veya seçilince renk: KIRMIZI
-                h.cardView.setCardBackgroundColor(Color.parseColor("#E50914"))
-                h.cardView.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
-                onFocus(c)
+                // Kumanda ile kanalın üzerine gelindiğinde
+                h.cardView.setCardBackgroundColor(Color.parseColor("#FF6200EE")) // Mor tonu (aktif)
+                h.name.setTextColor(Color.WHITE)
+                h.cardView.cardElevation = 15f
+                onFocus(c) // Kanal önizlemede otomatik oynasın
             } else {
-                // Seçili değilken renk: KOYU GRİ
-                h.cardView.setCardBackgroundColor(Color.parseColor("#222222"))
-                h.cardView.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
+                // Odak kanaldan çekildiğinde
+                h.cardView.setCardBackgroundColor(Color.parseColor("#1E1E1E")) // Koyu gri (pasif)
+                h.name.setTextColor(Color.LTGRAY)
+                h.cardView.cardElevation = 4f
             }
         }
 
-        // TIKLAMA MANTIĞI
+        // 3. TIKLAMA VE ÇİFT TIKLAMA MANTIĞI
         h.itemView.setOnClickListener {
             val currentTime = System.currentTimeMillis()
             if (currentTime - lastClickTime < doubleClickTimeout) {
-                onClick(c)
+                onClick(c) // Çift tıklama: Tam ekran aç
             } else {
-                h.itemView.requestFocus()
+                onFocus(c) // Tek tıklama: Önizlemede oynat (Eğer focus değilse)
             }
             lastClickTime = currentTime
         }
 
-        // UZUN BASINCA SİL/DÜZENLE (CONTEXT MENU)
+        // 4. UZUN BASMA (DÜZENLE/SİL)
         h.itemView.setOnLongClickListener {
             onLongClick(c, p)
             true
