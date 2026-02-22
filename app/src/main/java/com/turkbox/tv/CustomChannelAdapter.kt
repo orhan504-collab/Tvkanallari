@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 
@@ -16,8 +15,7 @@ class CustomChannelAdapter(
 ) : RecyclerView.Adapter<CustomChannelAdapter.ViewHolder>() {
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        // XML'de id olmadığı için 'v as CardView' diyerek en dıştaki CardView'u alıyoruz
-        val card: CardView = v as CardView
+        val card: CardView = v.findViewById(R.id.cardView) // item_channel.xml'de bu ID olmalı
         val name: TextView = v.findViewById(R.id.tvChannelName)
     }
 
@@ -30,40 +28,30 @@ class CustomChannelAdapter(
         val c = channels[p]
         h.name.text = c.name
 
-        // Odaklanma (Focus) Efekti - TV Kumandası için
-        h.itemView.setOnFocusChangeListener { view, hasFocus ->
+        // TV KUMANDA ODAKLANMA (FOCUS) MANTIĞI
+        h.itemView.isFocusable = true
+        h.itemView.isFocusableInTouchMode = true
+
+        h.itemView.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                // Seçiliyken büyü ve kırmızı ol
-                view.animate().scaleX(1.08f).scaleY(1.08f).setDuration(200).start()
-                h.card.setCardBackgroundColor(Color.parseColor("#E50914")) 
+                // Kumanda ile üstüne gelindiğinde:
+                h.card.setCardBackgroundColor(Color.parseColor("#E50914")) // Netflix Kırmızısı
                 h.name.setTextColor(Color.WHITE)
+                h.itemView.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start() // Hafif büyüme
+                
+                // Sağdaki çerçevede oynatması için MainActivity'ye haber ver
                 onFocus(c)
             } else {
-                // Seçili değilken eski haline (senin belirlediğin #222222 rengine) dön
-                view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
-                h.card.setCardBackgroundColor(Color.parseColor("#222222")) 
-                h.name.setTextColor(Color.parseColor("#BBBBBB"))
+                // Odak gidince eski haline dön:
+                h.card.setCardBackgroundColor(Color.parseColor("#252525")) // Koyu Gri
+                h.name.setTextColor(Color.LTGRAY)
+                h.itemView.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
             }
         }
 
+        // TIKLAMA MANTIĞI (Telefon ve Kumanda Tamam Tuşu)
         h.itemView.setOnClickListener {
             onClick(c)
-        }
-
-        h.itemView.setOnLongClickListener {
-            AlertDialog.Builder(h.itemView.context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Kanalı Sil")
-                .setMessage("${c.name} silinsin mi?")
-                .setPositiveButton("Evet") { _, _ ->
-                    val pos = h.bindingAdapterPosition
-                    if (pos != RecyclerView.NO_POSITION) {
-                        channels.removeAt(pos)
-                        notifyItemRemoved(pos)
-                    }
-                }
-                .setNegativeButton("Hayır", null)
-                .show()
-            true
         }
     }
 
