@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // RecyclerView Hazırlığı
         rv = findViewById(R.id.recyclerView)
         rv.layoutManager = GridLayoutManager(this, 4)
 
@@ -30,40 +31,40 @@ class MainActivity : AppCompatActivity() {
         })
         rv.adapter = adapter
 
-        // HATA GİDERME: Eğer XML'de ID farklıysa build hata vermesin diye 'findViewById' sonucunu kontrol ediyoruz
-        val fab = findViewById<FloatingActionButton>(resources.getIdentifier("fabAddChannel", "id", packageName))
-        fab?.setOnClickListener {
+        // Ekleme Butonu (XML'deki ID'nizin 'fabAddChannel' olduğunu varsayıyorum)
+        val fab = findViewById<FloatingActionButton>(R.id.fabAddChannel)
+        fab.setOnClickListener {
             showAddChannelDialog()
         }
 
+        // Başlangıç kanalı
         channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
         adapter.notifyDataSetChanged()
     }
 
     private fun showAddChannelDialog() {
-        val builder = AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
         val inflater = LayoutInflater.from(this)
-        
-        // dialog_add_channel.xml dosyasının varlığından emin olun
         val dialogView = inflater.inflate(R.layout.dialog_add_channel, null)
         
-        // ID'leri dinamik aratarak build hatalarını engelliyoruz
-        val etName = dialogView.findViewById<EditText>(resources.getIdentifier("etChannelName", "id", packageName))
-        val etUrl = dialogView.findViewById<EditText>(resources.getIdentifier("etChannelUrl", "id", packageName))
+        // SENİN XML ID'LERİNLE EŞLEŞTİRİLDİ:
+        val etName = dialogView.findViewById<EditText>(R.id.etName)
+        val etUrl = dialogView.findViewById<EditText>(R.id.etUrl)
 
         builder.setView(dialogView)
-            .setTitle("Yeni Kanal Ekle")
-            .setPositiveButton("Ekle") { _, _ ->
-                val name = etName?.text?.toString() ?: ""
-                val url = etUrl?.text?.toString() ?: ""
+            .setPositiveButton("EKLE") { _, _ ->
+                val name = etName.text.toString().trim()
+                val url = etUrl.text.toString().trim()
+                
                 if (name.isNotEmpty() && url.isNotEmpty()) {
                     channelList.add(Channel(name, url))
                     adapter.notifyItemInserted(channelList.size - 1)
+                    Toast.makeText(this, "$name eklendi", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "Eksik bilgi!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Alanları doldurun!", Toast.LENGTH_SHORT).show()
                 }
             }
-            .setNegativeButton("İptal", null)
+            .setNegativeButton("İPTAL", null)
             .show()
     }
 
@@ -93,12 +94,12 @@ class MainActivity : AppCompatActivity() {
                     if (foundUrl != null) {
                         startPlayer(foundUrl)
                     } else {
-                        Toast.makeText(this@MainActivity, "Link bulunamadı!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Yayın linki bulunamadı!", Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Hata!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Bağlantı hatası!", Toast.LENGTH_SHORT).show()
                 }
             }
         }
