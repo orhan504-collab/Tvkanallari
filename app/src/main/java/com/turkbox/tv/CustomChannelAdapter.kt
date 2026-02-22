@@ -19,7 +19,8 @@ class CustomChannelAdapter(
     private val doubleClickTimeout = 300L
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        val cardView: CardView = v.findViewById(R.id.cardView) // layout dosmandaki ID ile eşleşmeli
+        // Eğer layout dosyasındaki ID farklıysa bile hata vermemesi için 'as CardView' kullandık
+        val card: CardView = v as CardView
         val name: TextView = v.findViewById(R.id.tvChannelName)
     }
 
@@ -31,37 +32,31 @@ class CustomChannelAdapter(
     override fun onBindViewHolder(h: ViewHolder, p: Int) {
         val c = channels[p]
         
-        // 1. KANAL NUMARASINI VE İSMİNİ SET ET
+        // Kanal numarasını ve ismini göster (e.g., 1. TRT 1)
         h.name.text = "${c.id}. ${c.name}"
 
-        // 2. ODAKLANMA (FOCUS) EFEKTİ VE ZAPPING
+        // ODAKLANMA (TV KUMANDASI İÇİN)
         h.itemView.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                // Kumanda ile kanalın üzerine gelindiğinde
-                h.cardView.setCardBackgroundColor(Color.parseColor("#FF6200EE")) // Mor tonu (aktif)
+                h.card.setCardBackgroundColor(Color.parseColor("#444444")) // Seçili renk
                 h.name.setTextColor(Color.WHITE)
-                h.cardView.cardElevation = 15f
-                onFocus(c) // Kanal önizlemede otomatik oynasın
+                onFocus(c) // Kanalı önizlemede oynat
             } else {
-                // Odak kanaldan çekildiğinde
-                h.cardView.setCardBackgroundColor(Color.parseColor("#1E1E1E")) // Koyu gri (pasif)
+                h.card.setCardBackgroundColor(Color.parseColor("#1A1A1A")) // Normal renk
                 h.name.setTextColor(Color.LTGRAY)
-                h.cardView.cardElevation = 4f
             }
         }
 
-        // 3. TIKLAMA VE ÇİFT TIKLAMA MANTIĞI
+        // TIKLAMA (FULL SCREEN)
         h.itemView.setOnClickListener {
             val currentTime = System.currentTimeMillis()
             if (currentTime - lastClickTime < doubleClickTimeout) {
-                onClick(c) // Çift tıklama: Tam ekran aç
-            } else {
-                onFocus(c) // Tek tıklama: Önizlemede oynat (Eğer focus değilse)
+                onClick(c)
             }
             lastClickTime = currentTime
         }
 
-        // 4. UZUN BASMA (DÜZENLE/SİL)
+        // UZUN BASMA (SİLME/DÜZENLEME)
         h.itemView.setOnLongClickListener {
             onLongClick(c, p)
             true
