@@ -16,7 +16,7 @@ class CustomChannelAdapter(
 ) : RecyclerView.Adapter<CustomChannelAdapter.ViewHolder>() {
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        // Hata veren R.id.cardView yerine doğrudan View'ın kendisini CardView olarak alıyoruz
+        // XML'de id olmadığı için 'v as CardView' diyerek en dıştaki CardView'u alıyoruz
         val card: CardView = v as CardView
         val name: TextView = v.findViewById(R.id.tvChannelName)
     }
@@ -30,19 +30,19 @@ class CustomChannelAdapter(
         val c = channels[p]
         h.name.text = c.name
 
-        h.itemView.isFocusable = true
-        h.itemView.isFocusableInTouchMode = true
-
+        // Odaklanma (Focus) Efekti - TV Kumandası için
         h.itemView.setOnFocusChangeListener { view, hasFocus ->
             if (hasFocus) {
-                view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
-                h.card.setCardBackgroundColor(Color.parseColor("#E50914"))
+                // Seçiliyken büyü ve kırmızı ol
+                view.animate().scaleX(1.08f).scaleY(1.08f).setDuration(200).start()
+                h.card.setCardBackgroundColor(Color.parseColor("#E50914")) 
                 h.name.setTextColor(Color.WHITE)
                 onFocus(c)
             } else {
+                // Seçili değilken eski haline (senin belirlediğin #222222 rengine) dön
                 view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
-                h.card.setCardBackgroundColor(Color.parseColor("#333333"))
-                h.name.setTextColor(Color.LTGRAY)
+                h.card.setCardBackgroundColor(Color.parseColor("#222222")) 
+                h.name.setTextColor(Color.parseColor("#BBBBBB"))
             }
         }
 
