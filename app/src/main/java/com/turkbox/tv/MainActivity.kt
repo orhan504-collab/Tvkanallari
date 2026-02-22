@@ -22,7 +22,6 @@ class MainActivity : AppCompatActivity() {
     private var previewPlayer: ExoPlayer? = null
     private lateinit var previewView: PlayerView
     
-    // Tıklama hızı kontrolü (Çift tık için)
     private var lastClickTime: Long = 0
     private val doubleClickTimeout = 300L
 
@@ -30,18 +29,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 1. Sağdaki önizleme oynatıcısını bağla
         previewView = findViewById(R.id.previewPlayerView)
         setupPreviewPlayer()
 
-        // 2. assets/channels.json dosyasından verileri çek
+        // 1. ÖNCE LİSTEYİ DOLDUR (JSON'DAN)
         loadChannelsFromJson()
 
-        // 3. RecyclerView (Kanal Listesi) ayarları
         val rv = findViewById<RecyclerView>(R.id.recyclerView)
         rv.layoutManager = LinearLayoutManager(this)
 
-        // 4. Adapter'ı tüm özelliklerle (Focus, Click, LongClick) başlat
+        // 2. ADAPTER'I BAĞLA
         adapter = CustomChannelAdapter(
             channelList,
             onFocus = { channel -> playInPreview(channel.url) }, 
@@ -51,7 +48,6 @@ class MainActivity : AppCompatActivity() {
         
         rv.adapter = adapter
 
-        // 5. Kanal Ekleme Butonu
         findViewById<FloatingActionButton>(R.id.btnAddChannel).setOnClickListener { 
             showAddDialog() 
         }
@@ -64,15 +60,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadChannelsFromJson() {
         try {
+            // assets/channels.json dosyasını aç
             val inputStream: InputStream = assets.open("channels.json")
             val json = inputStream.bufferedReader().use { it.readText() }
             val jsonArray = JSONArray(json)
+            
+            // Mevcut listeyi temizle ve JSON'dan gelenleri ekle
+            channelList.clear()
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
                 channelList.add(Channel(obj.getString("name"), obj.getString("url")))
             }
+            // Eğer JSON'dan sonra liste hala boşsa varsayılanı ekle
+            if (channelList.isEmpty()) {
+                channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
+            }
         } catch (e: Exception) {
-            // JSON bulunamazsa varsayılan bir kanal ekle
+            e.printStackTrace()
+            // Hata durumunda veya dosya yoksa varsayılan kanal
             if (channelList.isEmpty()) {
                 channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
             }
@@ -80,24 +85,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playInPreview(url: String) {
-        // Sadece doğrudan m3u8 linklerini sağdaki küçük ekranda oynat
         if (url.contains(".m3u8") || url.contains(".ts")) {
             val mediaItem = MediaItem.fromUri(url)
             previewPlayer?.setMediaItem(mediaItem)
             previewPlayer?.prepare()
             previewPlayer?.play()
         } else {
-            previewPlayer?.stop() // Web sitesi linki ise önizlemeyi kapat
+            previewPlayer?.stop()
         }
     }
 
     private fun handleInteraction(channel: Channel) {
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastClickTime < doubleClickTimeout) {
-            // Çift Tıklama -> Tam Ekran Oynatıcıyı Aç
             openFullScreen(channel.url)
         } else {
-            // Tek Tıklama -> Sağdaki Önizlemede Aç
             playInPreview(channel.url)
         }
         lastClickTime = currentTime
@@ -124,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                     1 -> {
                         channelList.removeAt(position)
                         adapter.notifyItemRemoved(position)
-                        Toast.makeText(this, "Kanal silindi", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Silindi", Toast.LENGTH_SHORT).show()
                     }
                 }
             }.show()
@@ -144,7 +146,6 @@ class MainActivity : AppCompatActivity() {
                 channel.name = etName.text.toString()
                 channel.url = etUrl.text.toString()
                 adapter.notifyItemChanged(position)
-                Toast.makeText(this, "Güncellendi", Toast.LENGTH_SHORT).show()
             }.setNegativeButton("İPTAL", null).show()
     }
 
@@ -154,7 +155,7 @@ class MainActivity : AppCompatActivity() {
         val etName = dialogView.findViewById<EditText>(R.id.etName)
         val etUrl = dialogView.findViewById<EditText>(R.id.etUrl)
 
-        builder.setView(dialogView).setTitle("Yeni Kanal Ekle")
+        builder.setView(dialogView).setTitle("Yeni Kanal")
             .setPositiveButton("EKLE") { _, _ ->
                 val name = etName.text.toString().trim()
                 val url = etUrl.text.toString().trim()
