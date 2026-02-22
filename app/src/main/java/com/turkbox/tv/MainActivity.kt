@@ -234,7 +234,6 @@ class MainActivity : AppCompatActivity() {
     channelList.add(Channel(name = "Semerkand TV", url = "https://b01c02nl.mediatriple.net/videoonlylive/mtisvwurbfcyslive/broadcast_58d915bd40efc.smil/playlist.m3u8", id = 150))
     channelList.add(Channel(name = "Sports TV", url = "https://live.sportstv.com.tr/hls/low/sportstv.m3u8", id = 151))
     channelList.add(Channel(name = "Sun RTV", url = "https://live.artidijitalmedya.com/artidijital_sunrtv/sunrtv/playlist.m3u8", id = 152))
-    channelList.add(Channel(name = "Tarih TV", url = 
     channelList.add(Channel(name = "TRT 1", url = "https://trt.daioncdn.net/trt-1/master.m3u8?app=web", id = 1))
             }
         }
