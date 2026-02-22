@@ -2,18 +2,12 @@ package com.turkbox.tv
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
 import org.jsoup.Jsoup
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var adapter: CustomChannelAdapter
@@ -24,75 +18,69 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Örnek Kanal
+        // Örnek Kanallar (Hem m3u8 hem web sayfası)
         channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
+        // Test için web sayfası ekleyebilirsin:
+        // channelList.add(Channel("ATV Canlı", "https://www.atv.com.tr/canli-yayin"))
 
         rv = findViewById(R.id.recyclerView)
         rv.layoutManager = GridLayoutManager(this, 4)
 
-        // Kanal Tıklama -> Oynatıcıyı Başlatır
+        // Adapter kurulumu ve tıklama mantığı
         adapter = CustomChannelAdapter(channelList, {}, { channel ->
-            val intent = Intent(this, PlayerActivity::class.java)
-            intent.putExtra("url", channel.url)
-            startActivity(intent)
+            handleChannelSelection(channel)
         })
+        
         rv.adapter = adapter
+    }
 
-        // Şık Ekle Butonu
-        findViewById<FloatingActionButton>(R.id.btnAddChannel).setOnClickListener {
-            showAddDialog()
+    private fun handleChannelSelection(channel: Channel) {
+        // Eğer link zaten doğrudan m3u8 ise bekletmeden aç
+        if (channel.url.contains(".m3u8")) {
+            startPlayer(channel.url)
+        } else {
+            // Eğer web sayfasıysa (atv.com.tr gibi), linki kazımaya başla
+            Toast.makeText(this, "Yayın linki aranıyor...", Toast.LENGTH_SHORT).show()
+            parseWebUrl(channel.url)
         }
-
-        setupTouchHelper()
     }
 
-    private fun showAddDialog() {
-        val v = LayoutInflater.from(this).inflate(R.layout.dialog_add_channel, null)
-        val etName = v.findViewById<EditText>(R.id.etName)
-        val etUrl = v.findViewById<EditText>(R.id.etUrl)
-
-        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle("Yeni Kanal")
-            .setView(v)
-            .setPositiveButton("Ekle") { _, _ ->
-                val name = etName.text.toString()
-                val url = etUrl.text.toString()
-                if (url.contains(".m3u8")) {
-                    channelList.add(Channel(name, url))
-                    adapter.notifyItemInserted(channelList.size - 1)
-                } else {
-                    findM3u8InWeb(name, url)
-                }
-            }.show()
-    }
-
-    private fun findM3u8InWeb(name: String, webUrl: String) {
+    private fun parseWebUrl(webUrl: String) {
+        // Arka planda (IO thread) çalıştırıyoruz ki uygulama donmasın
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val doc = Jsoup.connect(webUrl).userAgent("Mozilla/5.0").timeout(10000).get()
-                val match = "(https?://[^\\s\"']+\\.m3u8[^\\s\"']*)".toRegex().find(doc.toString())
+                // Web sayfasının HTML içeriğini indir
+                val doc = Jsoup.connect(webUrl)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                    .timeout(10000)
+                    .get()
+                
+                val htmlContent = doc.html()
+                
+                // HTML içinde .m3u8 ile biten linki Regex ile ara
+                val regex = "(https?://[^\"]+\\.m3u8[^\"]*)".toRegex()
+                val match = regex.find(htmlContent)
+                
+                val foundUrl = match?.value
+
                 withContext(Dispatchers.Main) {
-                    channelList.add(Channel(name, match?.value ?: webUrl))
-                    adapter.notifyItemInserted(channelList.size - 1)
+                    if (foundUrl != null) {
+                        startPlayer(foundUrl)
+                    } else {
+                        Toast.makeText(this@MainActivity, "Yayın linki bulunamadı!", Toast.LENGTH_LONG).show()
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Link bulunamadı", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Bağlantı hatası: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
 
-    private fun setupTouchHelper() {
-        val helper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
-            ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0) {
-            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder): Boolean {
-                Collections.swap(channelList, vh.adapterPosition, t.adapterPosition)
-                adapter.notifyItemMoved(vh.adapterPosition, t.adapterPosition)
-                return true
-            }
-            override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {}
-        })
-        helper.attachToRecyclerView(rv)
+    private fun startPlayer(url: String) {
+        val intent = Intent(this, PlayerActivity::class.java)
+        intent.putExtra("url", url)
+        startActivity(intent)
     }
 }
