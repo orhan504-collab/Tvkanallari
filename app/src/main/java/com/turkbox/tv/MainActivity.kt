@@ -24,13 +24,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Mevcut kanallar
         channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
 
         rv = findViewById(R.id.recyclerView)
         rv.layoutManager = GridLayoutManager(this, 4)
 
-        // Tıklayınca Video Açma Bağlantısı
+        // PlayerActivity hatası burada giderildi
         adapter = CustomChannelAdapter(channelList, {}, { channel ->
             val intent = Intent(this, PlayerActivity::class.java)
             intent.putExtra("url", channel.url)
@@ -38,12 +37,10 @@ class MainActivity : AppCompatActivity() {
         })
         rv.adapter = adapter
 
-        // Kanal Ekleme
         findViewById<FloatingActionButton>(R.id.btnAddChannel).setOnClickListener {
             showAddDialog()
         }
 
-        // Taşıma ve Silme
         setupItemTouchHelper()
     }
 
@@ -76,7 +73,11 @@ class MainActivity : AppCompatActivity() {
                     channelList.add(Channel(name, match?.value ?: webUrl))
                     adapter.notifyItemInserted(channelList.size - 1)
                 }
-            } catch (e: Exception) { /* Hata yönetimi */ }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Link bulunamadı", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -84,8 +85,10 @@ class MainActivity : AppCompatActivity() {
         val helper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0) {
             override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder): Boolean {
-                Collections.swap(channelList, vh.adapterPosition, t.adapterPosition)
-                adapter.notifyItemMoved(vh.adapterPosition, t.adapterPosition)
+                val from = vh.adapterPosition
+                val to = t.adapterPosition
+                Collections.swap(channelList, from, to)
+                adapter.notifyItemMoved(from, to)
                 return true
             }
             override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {}
