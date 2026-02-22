@@ -25,27 +25,33 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
 }
 
 dependencies {
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'org.jsoup:jsoup:1.17.2'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    // Video Motoru
-    implementation "androidx.media3:media3-exoplayer:1.2.1"
-    implementation "androidx.media3:media3-ui:1.2.1"
-    implementation 'org.jsoup:jsoup:1.17.2'
-    implementation "androidx.media3:media3-exoplayer:1.2.1"
-    implementation "androidx.media3:media3-ui:1.2.1"
-    implementation 'org.jsoup:jsoup:1.17.2'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.cardview:cardview:1.0.0'
+    // Temel Android Kütüphaneleri
     implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.fragment:fragment-ktx:1.6.1'
-    implementation 'androidx.leanback:leanback:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.fragment:fragment-ktx:1.6.1'
+
+    // Android TV (Leanback) Kütüphanesi
+    implementation 'androidx.leanback:leanback:1.0.0'
+
+    // Modern Media3 Video Motoru (HLS/m3u8 desteği için)
+    implementation "androidx.media3:media3-exoplayer:1.2.1"
+    implementation "androidx.media3:media3-ui:1.2.1"
+    implementation "androidx.media3:media3-exoplayer-hls:1.2.1" // m3u8 için bu şart
+
+    // Web'den Link Kazıma (Jsoup)
+    implementation 'org.jsoup:jsoup:1.17.2'
+
+    // Arka Plan İşlemleri (Coroutines)
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    // JSON İşlemleri (Gson) - Bu eksikti, ekledim
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
