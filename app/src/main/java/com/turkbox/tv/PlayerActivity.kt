@@ -12,7 +12,7 @@ class PlayerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Görseli korumak için XML yerine kodla oluşturuyoruz (Hata riskini azaltır)
+        // Tam ekran oynatıcı
         val playerView = PlayerView(this)
         setContentView(playerView)
 
@@ -21,15 +21,10 @@ class PlayerActivity : AppCompatActivity() {
         player = ExoPlayer.Builder(this).build().apply {
             playerView.player = this
             val mediaItem = MediaItem.fromUri(videoUrl)
-            this.setMediaItem(mediaItem)
-            this.prepare()
-            this.play()
+            setMediaItem(mediaItem)
+            prepare()
+            play()
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        player?.pause()
     }
 
     override fun onDestroy() {
