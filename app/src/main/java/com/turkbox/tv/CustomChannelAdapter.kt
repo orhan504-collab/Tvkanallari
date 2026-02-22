@@ -14,12 +14,13 @@ class CustomChannelAdapter(
     private val onClick: (Channel) -> Unit
 ) : RecyclerView.Adapter<CustomChannelAdapter.ViewHolder>() {
 
+    // Çift tıklama kontrolü için zaman tutucu
     private var lastClickTime: Long = 0
     private val doubleClickTimeout = 300L
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        // XML'de id aramıyoruz, root view'un CardView olduğunu biliyoruz
-        val cardView: CardView = v as CardView
+        // En dıştaki view CardView olduğu için direkt v'yi CardView olarak alıyoruz
+        val card: CardView = v as CardView
         val name: TextView = v.findViewById(R.id.tvChannelName)
     }
 
@@ -32,29 +33,34 @@ class CustomChannelAdapter(
         val c = channels[p]
         h.name.text = c.name
 
-        // Kumanda Odağı (Zapping Mantığı)
+        // KUMANDA ODAKLANMA (FOCUS) VE TELEFON TEK TIKLAMA MANTIĞI
         h.itemView.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                // Odaklanınca kırmızı yap ve büyüt
-                h.cardView.setCardBackgroundColor(Color.parseColor("#E50914"))
-                h.cardView.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start()
-                // Sağdaki çerçevede oynat
+                // Kumanda ile üstüne gelindiğinde veya telefonla tıklandığında:
+                h.card.setCardBackgroundColor(Color.parseColor("#E50914")) // Kırmızı yap
+                h.card.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start() // Büyüt
+                h.card.cardElevation = 15f // Öne çıkar
+                
+                // SAĞDAKİ ÇERÇEVEDE OYNAT: MainActivity içindeki fonksiyonu tetikler
                 onFocus(c)
             } else {
-                // Odak gidince orijinal renge dön
-                h.cardView.setCardBackgroundColor(Color.parseColor("#222222"))
-                h.cardView.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start()
+                // Odak gidince eski haline dön
+                h.card.setCardBackgroundColor(Color.parseColor("#222222")) // Orijinal koyu renk
+                h.card.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start() // Küçült
+                h.card.cardElevation = 4f
             }
         }
 
-        // Tıklama Mantığı
+        // TIKLAMA MANTIĞI (TAM EKRAN İÇİN)
         h.itemView.setOnClickListener {
             val currentTime = System.currentTimeMillis()
+            
+            // Kumanda için tek tıklama yeterli, telefon için çift tıklama kontrolü
             if (currentTime - lastClickTime < doubleClickTimeout) {
-                // Çift Tıklama -> Tam Ekran
+                // ÇİFT TIKLAMA -> TAM EKRAN AÇ
                 onClick(c)
             } else {
-                // Tek Tıklama -> Odağı buraya çek (Sağda açılmasını sağlar)
+                // TEK TIKLAMADA ODAKLANMAYI SAĞLA (Böylece sağda açılır)
                 h.itemView.requestFocus()
             }
             lastClickTime = currentTime
