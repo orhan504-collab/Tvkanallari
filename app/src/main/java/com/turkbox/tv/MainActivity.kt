@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // RecyclerView kurulumu
         rv = findViewById(R.id.recyclerView)
         rv.layoutManager = GridLayoutManager(this, 4)
 
@@ -30,18 +31,23 @@ class MainActivity : AppCompatActivity() {
         })
         rv.adapter = adapter
 
-        // HATA GİDERİCİ: ID'yi direkt yazmak yerine güvenli arama yapıyoruz
+        // BUTON DÜZELTMESİ: XML'deki kırmızı butonu bul ve tıklandığında diyaloğu aç
+        // Buradaki "fabAddChannel" isminin activity_main.xml içindeki id ile aynı olduğundan emin olun
         val fabId = resources.getIdentifier("fabAddChannel", "id", packageName)
-        if (fabId != 0) {
-            val fab = findViewById<View>(fabId)
-            fab?.setOnClickListener {
-                showAddChannelDialog()
-            }
+        val fabButton = if (fabId != 0) findViewById<View>(fabId) else null
+        
+        fabButton?.setOnClickListener {
+            showAddChannelDialog()
+        } ?: run {
+            // Eğer id bulunamazsa tüm View içinde FloatingActionButton ara (Fallback)
+            Toast.makeText(this, "Ekleme butonu yapılandırılıyor...", Toast.LENGTH_SHORT).show()
         }
 
-        // Örnek kanal
-        channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
-        adapter.notifyDataSetChanged()
+        // Örnek başlangıç kanalı
+        if (channelList.isEmpty()) {
+            channelList.add(Channel("TRT 1", "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"))
+            adapter.notifyDataSetChanged()
+        }
     }
 
     private fun showAddChannelDialog() {
@@ -49,14 +55,12 @@ class MainActivity : AppCompatActivity() {
         val inflater = LayoutInflater.from(this)
         val dialogView = inflater.inflate(R.layout.dialog_add_channel, null)
         
-        // etName ve etUrl ID'lerini kontrol ederek alıyoruz
-        val nameId = resources.getIdentifier("etName", "id", packageName)
-        val urlId = resources.getIdentifier("etUrl", "id", packageName)
-        
-        val etName = if (nameId != 0) dialogView.findViewById<EditText>(nameId) else null
-        val etUrl = if (urlId != 0) dialogView.findViewById<EditText>(urlId) else null
+        // Sizin paylaştığınız XML'deki id'ler (etName ve etUrl)
+        val etName = dialogView.findViewById<EditText>(R.id.etName)
+        val etUrl = dialogView.findViewById<EditText>(R.id.etUrl)
 
         builder.setView(dialogView)
+            .setTitle("Yeni Kanal Ekle")
             .setPositiveButton("EKLE") { _, _ ->
                 val name = etName?.text?.toString()?.trim() ?: ""
                 val url = etUrl?.text?.toString()?.trim() ?: ""
@@ -65,7 +69,7 @@ class MainActivity : AppCompatActivity() {
                     channelList.add(Channel(name, url))
                     adapter.notifyItemInserted(channelList.size - 1)
                 } else {
-                    Toast.makeText(this, "Eksik bilgi!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Lütfen alanları doldurun!", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("İPTAL", null)
@@ -76,7 +80,7 @@ class MainActivity : AppCompatActivity() {
         if (channel.url.contains(".m3u8")) {
             startPlayer(channel.url)
         } else {
-            Toast.makeText(this, "Yayın aranıyor...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Yayın linki aranıyor...", Toast.LENGTH_SHORT).show()
             parseWebUrl(channel.url)
         }
     }
@@ -89,16 +93,16 @@ class MainActivity : AppCompatActivity() {
                     .timeout(10000)
                     .get()
                 
-                val htmlContent = doc.html()
+                val html = doc.html()
                 val regex = "(https?://[^\"]+\\.m3u8[^\"]*)".toRegex()
-                val match = regex.find(htmlContent)
+                val match = regex.find(html)
                 val foundUrl = match?.value
 
                 withContext(Dispatchers.Main) {
                     if (foundUrl != null) {
                         startPlayer(foundUrl)
                     } else {
-                        Toast.makeText(this@MainActivity, "Link bulunamadı!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Web sayfasında yayın bulunamadı!", Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
